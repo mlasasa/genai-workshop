@@ -1,0 +1,30 @@
+version: '3'
+services:
+  umbraco-db:
+    build:
+      context: .
+      dockerfile: DbDockerfile
+    ports:
+      - 1433:1433
+    volumes:
+      - type: volume
+        source: data
+        target: /var/opt/mssql
+    environment: 
+      - SA_PASSWORD=Strong@Passw0rd
+      - ACCEPT_EULA=Y
+    command:
+      - /bin/bash
+      - -c 
+      - |
+        /opt/mssql/bin/sqlservr &
+        sleep 20
+        # TODO set a flag so that this is only done once on creation, 
+        #      and not every time the container runs
+        for foo in /scripts/*.sql
+          do /opt/mssql-tools/bin/sqlcmd -U sa -P $$SA_PASSWORD -l 30 -e -i $$foo
+        done
+        sleep infinity
+
+volumes:
+  data:
